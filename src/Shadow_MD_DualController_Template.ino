@@ -46,9 +46,11 @@
 //                        General User Settings
 // ---------------------------------------------------------------------------------------
 
-String PS3ControllerFootMac = "XX:XX:XX:XX:XX:XX";  //Set this to your FOOT PS3 controller MAC address
-String PS3ControllerDomeMAC = "XX:XX:XX:XX:XX:XX";  //Set to a secondary DOME PS3 controller MAC address (Optional)
+// String PS3ControllerFootMac = "XX:XX:XX:XX:XX:XX";  //Set this to your FOOT PS3 controller MAC address
+// String PS3ControllerDomeMAC = "XX:XX:XX:XX:XX:XX";  //Set to a secondary DOME PS3 controller MAC address (Optional)
 
+String PS3ControllerFootMac = "00:06:F7:C1:CE:BE";  //Set this to your FOOT PS3 controller MAC address
+String PS3ControllerDomeMAC = "00:07:04:EC:2F:3D";  //Set to a secondary DOME PS3 controller MAC address (Optional)
 String PS3ControllerBackupFootMac = "XX";  //Set to the MAC Address of your BACKUP FOOT controller (Optional)
 String PS3ControllerBackupDomeMAC = "XX";  //Set to the MAC Address of your BACKUP DOME controller (Optional)
 
@@ -69,13 +71,26 @@ byte joystickDomeDeadZoneRange = 10;  // For controllers that centering problems
 
 byte driveDeadBandRange = 10;     // Used to set the Sabertooth DeadZone for foot motors
 
-int invertTurnDirection = -1;   //This may need to be set to 1 for some configurations
+int invertTurnDirection = 1;    // This may need to be set to 1 for some configurations
+int invertDriveDirection = -1;  // This may need to be set to 1 for some configurations
+int invertDomeDirection = -1;   // This may need to be set to 1 for some configurations
 
 byte domeAutoSpeed = 70;     // Speed used when dome automation is active - Valid Values: 50 - 100
 int time360DomeTurn = 2500;  // milliseconds for dome to complete 360 turn at domeAutoSpeed - Valid Values: 2000 - 8000 (2000 = 2 seconds)
+//Eebel START
+bool DPLOpen = false;  //Global variable to toggle Data Panel Door so I can use one button to open and close
+bool HoloOn = false;  //Global Variable to toggle Holos On/Off with one button
+bool TopUArmOpen = false;
+bool BotUArmOpen = false;
+bool LeftDoorOpen = false;
+bool RightDoorOpen = false;
+int CurrentSongNum = 0; //First of 5 Custom Song MP3 Files stats at zero, the first increment will make it 1.
+int CustomSongMax = 8; //Total Number of Custom Songs
+//Eebel END
 
-#define SHADOW_DEBUG       //uncomment this for console DEBUG output
-#define SHADOW_VERBOSE     //uncomment this for console VERBOSE output
+#define SHADOW_DEBUG        // uncomment this for console DEBUG output
+#define SHADOW_VERBOSE      // uncomment this for console VERBOSE output
+#define MRBADDELEY          // setup marcduino eeprom for MrBaddeley printed droid
 
 // ---------------------------------------------------------------------------------------
 //                          MarcDuino Button Settings
@@ -160,7 +175,19 @@ int time360DomeTurn = 2500;  // milliseconds for dome to complete 360 turn at do
 //   *** MAGIC PANEL LIGHTING COMMANDS
 //    76 = Magic Panel ON
 //    77 = Magic Panel OFF
-//    78 = Magic Panel Flicker (10 seconds) 
+//    78 = Magic Panel Flicker (10 seconds)
+//   ***  Tim Ebel addons
+//    79 = Eebel Sppok Wave Dome and body
+//    80 = Eebel Wave Bye and WaveByeSound
+//    81 = Eebel Utility Arms Open and then Close
+//    82 = Eebel Open all Body Doors, raise arms, operate tools, lower arms close all doors
+//    83 = Eebel Use Gripper
+//    84 = Eebel Use INterface Tool
+//    85 = Eebel Ping Pong Body Doors
+//    86 = Eebel Star Wars Disco Dance
+//    87 = Eebel Star Trek Disco Dance (Wrong franchise! I know, right?)
+//    88 = Eebel Play Next Song
+//    89 = Eebel Play Previous Song
 //
 // Std MarcDuino Logic Display Functions (For custom functions)
 //     1 = Display normal random sequence
@@ -196,7 +223,10 @@ int btnUP_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnUP_MD_func = 12;
+//Eebel START
+//int btnUP_MD_func = 12; //Full Awake/Holo Lights Off 
+int btnUP_MD_func = 80; //Wave Bye 
+//Eebel END
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
@@ -264,6 +294,7 @@ int btnLeft_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
+// Mid Awake
 int btnLeft_MD_func = 13;
 
 // IF Custom Function (type=2)
@@ -332,6 +363,7 @@ int btnRight_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
+// Full Awake + reset
 int btnRight_MD_func = 14;
 
 // IF Custom Function (type=2)
@@ -400,6 +432,7 @@ int btnDown_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
+//Quiet mode + reset
 int btnDown_MD_func = 11;
 
 // IF Custom Function (type=2)
@@ -468,6 +501,7 @@ int btnUP_CROSS_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
+// Volume Up
 int btnUP_CROSS_MD_func = 26;
 
 // IF Custom Function (type=2)
@@ -536,6 +570,7 @@ int btnLeft_CROSS_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
+// Holo toggle
 int btnLeft_CROSS_MD_func = 23;
 
 // IF Custom Function (type=2)
@@ -604,7 +639,8 @@ int btnRight_CROSS_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnRight_CROSS_MD_func = 24;
+// Random Holo Movement
+int btnRight_CROSS_MD_func = 22;//was 24 Turn Holos Off
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
@@ -672,6 +708,7 @@ int btnDown_CROSS_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
+// Volume Down
 int btnDown_CROSS_MD_func = 27;
 
 // IF Custom Function (type=2)
@@ -740,7 +777,11 @@ int btnUP_CIRCLE_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnUP_CIRCLE_MD_func = 2;
+//int btnUP_CIRCLE_MD_func = 2;
+// Wave One at a time NO SOUND
+int btnUP_CIRCLE_MD_func = 16; 
+
+
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
@@ -808,7 +849,8 @@ int btnLeft_CIRCLE_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnLeft_CIRCLE_MD_func = 4;
+// Smirk Wave NO SOUND
+int btnLeft_CIRCLE_MD_func = 17;
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
@@ -876,7 +918,8 @@ int btnRight_CIRCLE_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnRight_CIRCLE_MD_func = 7;
+//Marching Ants NO SOUND
+int btnRight_CIRCLE_MD_func = 19;
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
@@ -944,7 +987,8 @@ int btnDown_CIRCLE_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnDown_CIRCLE_MD_func = 10;
+// Cantina Dance NO SOUND
+int btnDown_CIRCLE_MD_func = 21;
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
@@ -1017,8 +1061,10 @@ int btnUP_PS_MD_func = 0;
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
 // Valid values: 0 or 182 - 200  
-int btnUP_PS_cust_MP3_num = 183;  
-
+//Eebel START
+//int btnUp_PS_cust_MP3_num = 183;  
+int btnUP_PS_cust_MP3_num = 201;  
+//Eebel END
 // CUSTOM LOGIC DISPLAY SETTING: Pick from the Std MD Logic Display Functions (See Above)
 // Valid values: 0, 1 to 8  (0 - Not used)
 int btnUP_PS_cust_LD_type = 5;
@@ -1076,16 +1122,17 @@ int btnUP_PS_DP10_stay_open_time = 5; // in seconds (1 to 30)
 // CONFIGURE: Arrow Left + PS
 //---------------------------------
 //1 = Std MarcDuino Function, 2 = Custom Function
-int btnLeft_PS_type = 2;    
+int btnLeft_PS_type = 1;    
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnLeft_PS_MD_func = 0;
+//Play previous song
+int btnLeft_PS_MD_func = 89;
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
 // Valid values: 0 or 182 - 200  
-int btnLeft_PS_cust_MP3_num = 186;  
+int btnLeft_PS_cust_MP3_num = 0; //was 186 
 
 // CUSTOM LOGIC DISPLAY SETTING: Pick from the Std MD Logic Display Functions (See Above)
 // Valid values: 0, 1 to 8  (0 - Not used)
@@ -1144,16 +1191,18 @@ int btnLeft_PS_DP10_stay_open_time = 5; // in seconds (1 to 30)
 // CONFIGURE: Arrow Right + PS
 //---------------------------------
 //1 = Std MarcDuino Function, 2 = Custom Function
-int btnRight_PS_type = 2;    
+int btnRight_PS_type = 1;  //was 2  
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnRight_PS_MD_func = 0;
+// Play Next Song
+int btnRight_PS_MD_func = 88;//was 0 - Utility Arms Open, then Close
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
 // Valid values: 0 or 182 - 200  
-int btnRight_PS_cust_MP3_num = 185;  
+// Here They Come MP3
+int btnRight_PS_cust_MP3_num = 0;//Was 185  
 
 // CUSTOM LOGIC DISPLAY SETTING: Pick from the Std MD Logic Display Functions (See Above)
 // Valid values: 0, 1 to 8  (0 - Not used)
@@ -1221,7 +1270,10 @@ int btnDown_PS_MD_func = 0;
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
 // Valid values: 0 or 182 - 200  
-int btnDown_PS_cust_MP3_num = 184;  
+// PLay Darth Vader
+//int btnDown_PS_cust_MP3_num = 184;  
+int btnDown_PS_cust_MP3_num = 202;  
+//Eebel END
 
 // CUSTOM LOGIC DISPLAY SETTING: Pick from the Std MD Logic Display Functions (See Above)
 // Valid values: 0, 1 to 8  (0 - Not used)
@@ -1280,16 +1332,18 @@ int btnDown_PS_DP10_stay_open_time = 5; // in seconds (1 to 30)
 // CONFIGURE: Arrow Up + L1
 //---------------------------------
 //1 = Std MarcDuino Function, 2 = Custom Function
-int btnUP_L1_type = 1;    
+int btnUP_L1_type = 2;    
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int btnUP_L1_MD_func = 8;
+// Meco Darth Vader 
+int btnUP_L1_MD_func = 184;
 
 // IF Custom Function (type=2)
 // CUSTOM SOUND SETTING: Enter the file # prefix on the MP3 trigger card of the sound to play (0 = NO SOUND)
 // Valid values: 0 or 182 - 200  
-int btnUP_L1_cust_MP3_num = 0;  
+// Meco Darth Vader 
+int btnUP_L1_cust_MP3_num = 184;  
 
 // CUSTOM LOGIC DISPLAY SETTING: Pick from the Std MD Logic Display Functions (See Above)
 // Valid values: 0, 1 to 8  (0 - Not used)
@@ -1352,6 +1406,7 @@ int btnLeft_L1_type = 1;
 
 // IF Std MarcDuino Function (type=1) 
 // Enter MarcDuino Function Code (1 - 78) (See Above)
+// Wave Body and dome panels One at a time
 int btnLeft_L1_MD_func = 3;
 
 // IF Custom Function (type=2)
@@ -1556,121 +1611,141 @@ int btnDown_L1_DP10_stay_open_time = 5; // in seconds (1 to 30)
 // CONFIGURE: Arrow Up
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnUP_MD_func = 58;
+// Open Body doors and operate arms and tools, then close
+int FTbtnUP_MD_func = 82;  //was 58
 
 //---------------------------------
 // CONFIGURE: Arrow Left
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnLeft_MD_func = 56;
+// Gripper Sequence
+    int FTbtnLeft_MD_func = 83;//Open door
 
 //---------------------------------
 // CONFIGURE: Arrow Right
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnRight_MD_func = 57;
+// Interface Tool Seuence
+int FTbtnRight_MD_func = 84; //Was 57
 
 //---------------------------------
 // CONFIGURE: Arrow Down
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnDown_MD_func = 59;
+//Toggle DPL Door
+int FTbtnDown_MD_func = 56;//was 59
 
 //---------------------------------
 // CONFIGURE: Arrow UP + CROSS
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnUP_CROSS_MD_func = 28;
+// Faint With Body Panels
+int FTbtnUP_CROSS_MD_func = 7;
+//int FTbtnUP_CROSS_MD_func = 8;
 
 //---------------------------------
 // CONFIGURE: Arrow Left + CROSS
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnLeft_CROSS_MD_func = 33;
+// Open Dome and Body Panels
+int FTbtnLeft_CROSS_MD_func = 30;//Was close all Dome Panels 33
 
 //---------------------------------
 // CONFIGURE: Arrow Right + CROSS
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnRight_CROSS_MD_func = 30;
+// Close all Dome and Body Panels
+int FTbtnRight_CROSS_MD_func = 33;//Was Open all Dome 30
 
 //---------------------------------
 // CONFIGURE: Arrow Down + CROSS
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnDown_CROSS_MD_func = 29;
+// Scream Wave
+int FTbtnDown_CROSS_MD_func = 79;
 
 //---------------------------------
 // CONFIGURE: Arrow UP + CIRCLE
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnUP_CIRCLE_MD_func = 22;
+// Cantina Dance Orchestral
+int FTbtnUP_CIRCLE_MD_func = 8;
 
 //---------------------------------
 // CONFIGURE: Arrow Left + CIRCLE
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnLeft_CIRCLE_MD_func = 23;
+// Disco Staying Alive
+int FTbtnLeft_CIRCLE_MD_func = 10;
 
 //---------------------------------
 // CONFIGURE: Arrow Right + CIRCLE
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnRight_CIRCLE_MD_func = 24;
+// Star Wars Disco
+int FTbtnRight_CIRCLE_MD_func = 86;
 
 //---------------------------------
 // CONFIGURE: Arrow Down + CIRCLE
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnDown_CIRCLE_MD_func = 25;
+// Star Trek Disco
+int FTbtnDown_CIRCLE_MD_func = 87;
 
 //---------------------------------
 // CONFIGURE: Arrow UP + PS
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnUP_PS_MD_func = 38;
+// Utility Arms Wiggle
+int FTbtnUP_PS_MD_func = 81;
 
 //---------------------------------
 // CONFIGURE: Arrow Left + PS
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnLeft_PS_MD_func = 40;
+// Toggle Top Utility Arm
+int FTbtnLeft_PS_MD_func = 58;
 
 //---------------------------------
 // CONFIGURE: Arrow Right + PS
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnRight_PS_MD_func = 41;
+// Toggle Bottom Utility Arm
+int FTbtnRight_PS_MD_func = 60;
 
 //---------------------------------
 // CONFIGURE: Arrow Down + PS
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnDown_PS_MD_func = 39;
+// Ping Pong Left and Right Bofy Doors
+int FTbtnDown_PS_MD_func = 85;
 
 //---------------------------------
 // CONFIGURE: Arrow Up + L1
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnUP_L1_MD_func = 34;
+// Smirk Wave Fast
+int FTbtnUP_L1_MD_func = 4;//was 34
 
 //---------------------------------
 // CONFIGURE: Arrow Left + L1
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnLeft_L1_MD_func = 36;
+//Left Door Toggle
+int FTbtnLeft_L1_MD_func = 62; //was 36
 
 //---------------------------------
 // CONFIGURE: Arrow Right + L1
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnRight_L1_MD_func = 37;
+// Right Door Toggle
+int FTbtnRight_L1_MD_func = 68;  //was 37
 
 //---------------------------------
 // CONFIGURE: Arrow Down + L1
 //---------------------------------
 // Enter MarcDuino Function Code (1 - 78) (See Above)
-int FTbtnDown_L1_MD_func = 35;
+int FTbtnDown_L1_MD_func = 18; //was 35
 
 // ---------------------------------------------------------------------------------------
 //               SYSTEM VARIABLES - USER CONFIG SECTION COMPLETED
@@ -1840,22 +1915,46 @@ void setup()
     Serial.begin(115200);
     while (!Serial);
     
+    Serial.print(F("\r\nSystem starting up.\r\n"));
+
+    //Setup for Serial1:: MarcDuino Dome Control Board
+    Serial.print(F("\r\nMarcduino Dome connecting... "));
+    Serial1.begin(marcDuinoBaudRate); 
+    while (!Serial1);
+    Serial.print(F("done.\r\n"));
+
+    //Setup for Serial2:: Motor Controllers - Sabertooth (Feet) 
+    Serial.print(F("\r\nMotor Controller connecting... "));
+    Serial2.begin(motorControllerBaudRate);
+    while (!Serial2);
+    Serial.print(F("done.\r\n"));
+
+    //Setup for Serial3:: Optional MarcDuino Control Board for Body Panels
+    Serial.print(F("\r\nMarcduino Body connecting... "));
+    Serial3.begin(marcDuinoBaudRate);
+    while (!Serial3);
+    Serial.print(F("done.\r\n"));
+
+    // Wait for powered up USB-Shield
+    Serial.print(F("\r\nStarting USB... "));
+    delay(1500);
     if (Usb.Init() == -1)
     {
-        Serial.print(F("\r\nOSC did not start"));
+        Serial.print(F("\r\nOSC did not start! - HALT -"));
         while (1); //halt
     }
-    
-    Serial.print(F("\r\nBluetooth Library Started"));
+    Serial.print(F("USB + Bluetooth Library started.\r\n"));
     
     output.reserve(200); // Reserve 200 bytes for the output string
 
     //Setup for PS3
+    Serial.print(F("\r\nRegistering Controller Events... "));
     PS3NavFoot->attachOnInit(onInitPS3NavFoot); // onInitPS3NavFoot is called upon a new connection
     PS3NavDome->attachOnInit(onInitPS3NavDome); 
+    Serial.print(F("done.\r\n"));
 
-    //Setup for Serial2:: Motor Controllers - Sabertooth (Feet) 
-    Serial2.begin(motorControllerBaudRate);
+    //Setup for Sabertooth
+    Serial.print(F("\r\nSetting up Sabertooth bus..."));    
     ST->autobaud();          // Send the autobaud command to the Sabertooth controller(s).
     ST->setTimeout(10);      //DMB:  How low can we go for safety reasons?  multiples of 100ms
     ST->setDeadband(driveDeadBandRange);
@@ -1863,22 +1962,52 @@ void setup()
     SyR->autobaud();
     SyR->setTimeout(20);      //DMB:  How low can we go for safety reasons?  multiples of 100ms
     SyR->stop(); 
+    Serial.print(F("done.\r\n"));
 
-    //Setup for Serial1:: MarcDuino Dome Control Board
-    Serial1.begin(marcDuinoBaudRate); 
-    
-    //Setup for Serial3:: Optional MarcDuino Control Board for Body Panels
-    Serial3.begin(marcDuinoBaudRate);
-    
+#ifdef MRBADDELEY
+    // Config Mr. Baddeley printed droid
+    // #SRxxy Set individual servo to either forward or reversed xx=servo number y=direction
+    // *		Must be a 2 digit Servo number i.e. Servo 4 is 04
+    // *		Must be either 0 or 1 to set the direction (0 normal, 1 reversed)
+    // *		Use SDxx to globally set the Servo direction, then SRxxy to change individual servos.    
+    Serial.print(F("\r\nConfiguring Mr. Baddeley R2D2 MK3... "));
+    // Only needed once
+    delay(1500);
+    Serial3.print("#SD00\r");   // All servos normal
+    delay(550);
+    Serial3.print("#SR011\r");  // DPL door reverse
+    delay(550);
+    Serial3.print("#SR021\r");  // Upper Utility Arm reverse
+    delay(550);
+    Serial3.print("#SR031\r");  // Lower Utility Arm reverse
+    delay(550);
+    Serial.print(F("done.\r\n"));    
+#endif
+
+    // Close all panels
+    Serial1.print(":CL00");
+    Serial3.print(":CL00");
+    delay(550);
+    Serial1.print(":ST00\r");
+    Serial3.print(":ST00\r");            
+
     randomSeed(analogRead(0));  // random number seed for dome automation   
+    Serial.print(F("\r\n\r\nEntering Loop."));
 }
 
 // =======================================================================================
 //           Main Program Loop - This is the recurring check loop for entire sketch
 // =======================================================================================
 
+bool LoopMessageSent = false;
+
 void loop()
 {   
+    if (!LoopMessageSent)
+    {
+      Serial.print(F("\r\nInside Loop.\r\n"));
+      LoopMessageSent = true;
+    }
     //Useful to enable with serial console when having controller issues.
     #ifdef TEST_CONROLLER
       testPS3Controller();
@@ -2125,7 +2254,7 @@ boolean ps3FootMotorDrive(PS3BT* myPS3 = PS3NavFoot)
                   #endif
               
                   ST->turn(turnnum * invertTurnDirection);
-                  ST->drive(footDriveSpeed);
+                  ST->drive(footDriveSpeed * invertDriveDirection);
                   
               } else
               {    
@@ -2217,7 +2346,7 @@ void rotateDome(int domeRotationSpeed, String mesg)
                 output += domeRotationSpeed;
             #endif
         
-            SyR->motor(domeRotationSpeed);
+            SyR->motor(domeRotationSpeed*(invertDomeDirection));
             
           } else
           {
@@ -2404,21 +2533,113 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
   
   if (type == 1)  // Std Marcduino Function Call Configured
   {
-    
+//     5 = Wave 2, Open progressively all panels, then close one by one
+//     6 = Beep cantina - w/ marching ants panel action
+//     7 = Faint / Short Circuit
+//     8 = Cantina Dance - orchestral, rhythmic panel dance
+//     9 = Leia message
+//    10 = Disco
+//    11 = Quite mode reset (panel close, stop holos, stop sounds)
+//    12 = Full Awake mode reset (panel close, rnd sound, holo move,holo lights off)
+//    13 = Mid Awake mode reset (panel close, rnd sound, stop holos)
+//    14 = Full Awake+ reset (panel close, rnd sound, holo move, holo lights on)
+//    15 = Scream, with all panels open (NO SOUND)
+//    16 = Wave, one panel at a time (NO SOUND)
+//    17 = Fast (smirk) back and forth (NO SOUND)
+//    18 = Wave 2 (Open progressively, then close one by one) (NO SOUND)
+//    19 = Marching Ants (NO SOUND)
+//    20 = Faint/Short Circuit (NO SOUND)
+//    21 = Rhythmic cantina dance (NO SOUND)
+//    22 = Random Holo Movement On (All) - No other actions
+//    23 = Holo Lights On (All)
+//    24 = Holo Lights Off (All)
+//    25 = Holo reset (motion off, lights off)
+//    26 = Volume Up
+//    27 = Volume Down
+//    28 = Volume Max
+//    29 = Volume Mid
+//    30 = Open All Dome Panels
+//    31 = Open Top Dome Panels
+//    32 = Open Bottom Dome Panels
+//    33 = Close All Dome Panels
+//    34 = Open Dome Panel #1
+//    35 = Close Dome Panel #1
+//    36 = Open Dome Panel #2
+//    37 = Close Dome Panel #2
+//    38 = Open Dome Panel #3
+//    39 = Close Dome Panel #3
+//    40 = Open Dome Panel #4
+//    41 = Close Dome Panel #4
+//    42 = Open Dome Panel #5
+//    43 = Close Dome Panel #5
+//    44 = Open Dome Panel #6
+//    45 = Close Dome Panel #6
+//    46 = Open Dome Panel #7
+//    47 = Close Dome Panel #7
+//    48 = Open Dome Panel #8
+//    49 = Close Dome Panel #8
+//    50 = Open Dome Panel #9
+//    51 = Close Dome Panel #9
+//    52 = Open Dome Panel #10
+//    53 = Close Dome Panel #10
+//   *** BODY PANEL OPTIONS ASSUME SECOND MARCDUINO MASTER BOARD ON MEGA ADK SERIAL #3 ***
+//    56 = Open Body Panel #1
+//    57 = Close Body Panel #1
+//    58 = Open Body Panel #2
+//    59 = Close Body Panel #2
+//    60 = Open Body Panel #3
+//    61 = Close Body Panel #3
+//    62 = Open Body Panel #4
+//    63 = Close Body Panel #4
+//    64 = Open Body Panel #5
+//    65 = Close Body Panel #5
+//    66 = Open Body Panel #6
+//    67 = Close Body Panel #6
+//    68 = Open Body Panel #7
+//    69 = Close Body Panel #7
+//    70 = Open Body Panel #8
+//    71 = Close Body Panel #8
+//    72 = Open Body Panel #9
+//    73 = Close Body Panel #9
+//    74 = Open Body Panel #10
+//    75 = Close Body Panel #10
+//   *** MAGIC PANEL LIGHTING COMMANDS
+//    76 = Magic Panel ON
+//    77 = Magic Panel OFF
+//    78 = Magic Panel Flicker (10 seconds)
+//   ***  Tim Ebel addons
+//    79 = Eebel Sppok Wave Dome and body
+//    80 = Eebel Wave Bye and WaveByeSound
+//    81 = Eebel Utility Arms Open and then Close
+//    82 = Eebel Open all Body Doors, raise arms, operate tools, lower arms close all doors
+//    83 = Eebel Use Gripper
+//    84 = Eebel Use INterface Tool
+//    85 = Eebel Ping Pong Body Doors
+//    86 = Eebel Star Wars Disco Dance
+//    87 = Eebel Star Trek Disco Dance (Wrong franchise! I know, right?)
+//    88 = Eebel Play Next Song
+//    89 = Eebel Play Previous Song    
     switch (MD_func)
     {
+      // Close All Panels
       case 1:   
-        Serial1.print(":SE00\r");  
+        Serial1.print(":SE00\r");
+        Serial3.print(":SE00\r");
         break;
 
+      // Scream - all panels open
       case 2:
         Serial1.print(":SE01\r");
         break;
-        
+
+      // Wave, One Panel at a time
       case 3:
+        //Dome and Body Wave
         Serial1.print(":SE02\r");
+        Serial3.print(":SE02\r");
         break;
-        
+
+      // Fast (smirk) back and forth wave      
       case 4:
         Serial1.print(":SE03\r");
         break;
@@ -2432,7 +2653,9 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
         break;
                 
       case 7:
+        //Faint
         Serial1.print(":SE06\r");
+        Serial3.print(":SE06\r");
         break;
                 
       case 8:
@@ -2496,7 +2719,16 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
         break;
                 
       case 23:
-        Serial1.print("*ON00\r");
+        //Serial1.print("*ON00\r");
+        //Toggle Holo lights On/Off 
+        if (HoloOn == false){
+          Serial1.print("*ON00\r"); //Turn Holos On 
+          HoloOn = true;
+        } else {
+          //Turn Holos Off
+          Serial1.print("*OF00\r");
+          HoloOn = false;
+        }
         break;
                 
       case 24:
@@ -2525,6 +2757,12 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
                 
       case 30:
         Serial1.print(":OP00\r");
+        Serial3.print(":OP04\r"); //Left Body Door
+        Serial3.print(":OP07\r"); //Right Body Door
+        delay(550); //wait for Main Doors
+        Serial3.print(":OP01\r"); //DPL
+        Serial1.print(":ST00\r"); //Stop the buzz
+        Serial3.print(":ST00\r"); //Stop the buzz       
         break;
                 
       case 31:
@@ -2537,6 +2775,7 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
                 
       case 33:
         Serial1.print(":CL00\r");
+        Serial3.print(":CL00\r");
         break;
                 
       case 34:
@@ -2618,25 +2857,48 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
       case 53:
         Serial1.print(":CL10\r");
         break;
-                
+
+      // Open All Body Panels
       case 54:
         Serial3.print(":OP00\r");
         break;
-                
+
+      // Close All Body Panels         
       case 55:
         Serial3.print(":CL00\r");
         break;
                 
       case 56:
-        Serial3.print(":OP01\r");
+        //Toggle Body Panel Data Panel Door
+        if (DPLOpen == false){
+          Serial3.print(":OP01\r"); //Open the panel 
+          delay(550); //give panel time to open
+          Serial3.print(":ST01\r"); //Stop the buzz
+          DPLOpen = true;
+        } else {
+          //Close Body Panel 1
+          Serial3.print(":CL01\r");
+          DPLOpen = false;
+        }
         break;
                 
       case 57:
+        //Close Body Panel 1
         Serial3.print(":CL01\r");
         break;
                 
       case 58:
-        Serial3.print(":OP02\r");
+      //Top Utility Arm Toggle
+        if (TopUArmOpen == false){
+          Serial3.print(":OP02\r"); //Open the panel 
+          delay(550); //give panel time to open
+          Serial3.print(":ST02\r"); //Stop the buzz
+          TopUArmOpen = true;
+        } else {
+          //Close Utility Arm Panel 2
+          Serial3.print(":CL02\r");
+          TopUArmOpen = false;
+        }
         break;
                 
       case 59:
@@ -2644,7 +2906,17 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
         break;
                 
       case 60:
-        Serial3.print(":OP03\r");
+        //Bottom Utility Arm Toggle
+        if (BotUArmOpen == false){
+          Serial3.print(":OP03\r"); //Open the panel 
+          delay(550); //give panel time to open
+          Serial3.print(":ST03\r"); //Stop the buzz
+          BotUArmOpen = true;
+        } else {
+          //Close Utility Arm Panel 2
+          Serial3.print(":CL03\r");
+          BotUArmOpen = false;
+        }
         break;
                 
       case 61:
@@ -2652,7 +2924,17 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
         break;
                 
       case 62:
-        Serial3.print(":OP04\r");
+        //Toggle Left Body Door Panel 4
+        if (LeftDoorOpen == false){
+          Serial3.print(":OP04\r"); //Open the panel 4
+          delay(400); //give panel time to open
+          Serial3.print(":ST04\r"); //Stop the buzz
+          LeftDoorOpen = true;
+        } else {
+          //Close Left Door Panel 4
+          Serial3.print(":CL04\r");
+          LeftDoorOpen = false;
+        }
         break;
                 
       case 63:
@@ -2676,7 +2958,17 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
         break;
                 
       case 68:
-        Serial3.print(":OP07\r");
+        //Toggle Right Body Door Panel 7
+        if (RightDoorOpen == false){
+          Serial3.print(":OP07\r"); //Open the panel 7
+          delay(400); //give panel time to open
+          Serial3.print(":ST07\r"); //Stop the buzz
+          RightDoorOpen = true;
+        } else {
+          //Close Right Door Panel 7
+          Serial3.print(":CL07\r");
+          RightDoorOpen = false;
+        }
         break;
                 
       case 69:
@@ -2718,44 +3010,108 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
       case 78:
         Serial3.print("*MF10\r");
         break;
-
-    }  
-    
+        //Eebel code start
+      case 79:
+        //Scream and Wiggle Dome and Body
+        Serial1.print(":SE16\r");
+        Serial3.print(":SE32\r");
+        break;
+      case 80:
+        //WaveBye
+        Serial1.print(":SE17\r");
+        break;
+      case 81:
+        //Utility Arm Open and Close
+        Serial3.print(":SE30\r");
+        break;
+      case 82:
+        //Test all body panels/tools
+        Serial3.print(":SE31\r");
+        break;
+      case 83:
+        //Use Gripper Arm
+        Serial3.print(":SE33\r");
+        break;
+      case 84:
+        //Use Interface Tool
+        Serial3.print(":SE34\r");
+        break;
+      case 85:
+        //Use Ping Pong Big Body Doors 
+        Serial3.print(":SE35\r");
+        break;    
+      case 86:
+        //Star Wars Disco
+        Serial1.print(":SE18\r");
+        break;
+      case 87:
+        //Star Trek Disco
+        Serial1.print(":SE19\r");
+        break;  
+      case 88:
+        //Play Next Song
+        CurrentSongNum = CurrentSongNum + 1; //First of 5 Custom Song MP3 Files default is 0 at startup
+        if (CurrentSongNum > CustomSongMax){   
+            CurrentSongNum = 0;
+            Serial1.print(MakeSongCommand(1));//Reset to beginning Song and play it
+        }  else {
+            Serial1.print(MakeSongCommand(CurrentSongNum));//Play Newly selected song
+        }
+        break;
+      case 89:
+        //Play Previous Song
+        CurrentSongNum = CurrentSongNum - 1; //Previous of 5 Custom Song MP3 Files default is 0 at startup
+        
+        if (CurrentSongNum < 1){   
+            CurrentSongNum = CustomSongMax;
+        }
+            Serial1.print(MakeSongCommand(CurrentSongNum));//Reset to beginning Song and play it
+//        }  else {
+//            Serial1.print(MakeSongCommand(CurrentSongNum));//Play Newly selected song
+//        }
+        break;
+    }
+      //Eebel code end
   }  // End Std Marcduino Function Calls
-   
    
   if (type == 2) // Custom Button Configuration
   {
    
-      if (MP3_num > 181 && MP3_num < 201) // Valid Custom Sound Range Selected - Play Custom Sound Selection
+      if (MP3_num > 181 && MP3_num < 203) // Valid Custom Sound Range Selected - Play Custom Sound Selection
       {
         
         switch (MP3_num)
         {
           
           case 182:
+            // Star Wars Disco
              Serial1.print("$87\r");
              break;
              
           case 183:
+            // Star Trek Disco
              Serial1.print("$88\r");
              break;
           
           case 184:
-             Serial1.print("$89\r");
+            //Meco Darth Vader
+             Serial1.print("$809\r");
              break;
 
           case 185:
+            //Here They Come
              Serial1.print("$810\r");
              break;
              
           case 186:
+            //Return of the Jedi Finale
              Serial1.print("$811\r");
              break;
           
           case 187:
              Serial1.print("$812\r");
              break;
+             
           case 188:
              Serial1.print("$813\r");
              break;
@@ -2807,7 +3163,14 @@ void marcDuinoButtonPush(int type, int MD_func, int MP3_num, int LD_type, String
           case 200:
              Serial1.print("$825\r");
              break;
-          
+          case 201:
+             //Star Wars Theme
+             Serial1.print("$82\r");
+             break;
+          case 202:
+             //Darth Vader Theme
+             Serial1.print("$803\r");
+             break;
         }     
         
       }
@@ -5498,7 +5861,21 @@ void autoDome()
 // =======================================================================================
 //           Program Utility Functions - Called from various locations
 // =======================================================================================
+//Eebel Start
+String MakeSongCommand(int SongNumber){
+    //Takes the song number and makes a command to send to the Marcduino
+    //Valid songs are 804- 811 right now input is 1-8
+    SongNumber = SongNumber + 3;  //Adjust for numbering convention of Marcduino Song Files
+    String SongCommand = "";
+    SongCommand += "$8";
+    SongCommand += String(SongNumber);
+    SongCommand += "\r";
+    output += SongCommand;//For debugging
 
+    return SongCommand;   
+}
+
+//Eebel End
 // =======================================================================================
 //           PPS3 Controller Device Mgt Functions
 // =======================================================================================
@@ -5586,6 +5963,9 @@ void onInitPS3NavDome()
     } 
 }
 
+/*
+// Old buggy code
+// Those lines marked in yellow are needed, since if your last two digits of controllers MAC ends in 0x (08 for instance) it will never be paired since onInitPS3NavDome() and onInitPS3NavFoot() will fail 100% sure
 String getLastConnectedBtMAC()
 {
     String btAddress = "";
@@ -5601,6 +5981,31 @@ String getLastConnectedBtMAC()
     btAddress += String(Btd.disc_bdaddr[0], HEX);
     btAddress.toUpperCase();
     return btAddress; 
+}
+*/
+
+String getLastConnectedBtMAC()
+{
+    String btAddress = "";
+
+    for (int8_t i = 5; i > 0; i--)
+    {
+        if (Btd.disc_bdaddr[i] < 0x10)
+        {
+            btAddress += "0";
+        }
+        btAddress += String(Btd.disc_bdaddr[i], HEX);
+        btAddress += (":");
+    }
+
+    if (Btd.disc_bdaddr[0] < 0x10)
+    {
+        btAddress += "0";
+    }
+
+    btAddress += String(Btd.disc_bdaddr[0], HEX);
+    btAddress.toUpperCase();
+    return btAddress;
 }
 
 boolean criticalFaultDetect()
@@ -5670,6 +6075,7 @@ boolean criticalFaultDetect()
         //Check PS3 Signal Data
         if(!PS3NavFoot->getStatus(Plugged) && !PS3NavFoot->getStatus(Unplugged))
         {
+          Serial.println("\r\nSignal Check");
             //We don't have good data from the controller.
             //Wait 15ms if no second controller - 100ms if some controller connected, Update USB, and try again
             if (PS3NavDome->PS3NavigationConnected)
