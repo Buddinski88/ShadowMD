@@ -72,7 +72,7 @@ byte joystickDomeDeadZoneRange = 10;  // For controllers that centering problems
 byte driveDeadBandRange = 10;     // Used to set the Sabertooth DeadZone for foot motors
 
 int invertTurnDirection = 1;    // This may need to be set to 1 for some configurations
-int invertDriveDirection = -1;  // This may need to be set to 1 for some configurations
+int invertDriveDirection = 1;  // This may need to be set to 1 for some configurations
 int invertDomeDirection = -1;   // This may need to be set to 1 for some configurations
 
 byte domeAutoSpeed = 70;     // Speed used when dome automation is active - Valid Values: 50 - 100
@@ -92,7 +92,8 @@ int CustomSongMax = 8; //Total Number of Custom Songs
 #define SHADOW_DEBUG        // uncomment this for console DEBUG output
 #define SHADOW_VERBOSE      // uncomment this for console VERBOSE output
 #define MRBADDELEY          // setup marcduino eeprom for MrBaddeley printed droid
-#define CANBUS              // uncomment this for CANBUS enabled astromech 
+//#define CANBUS              // uncomment this for CANBUS enabled astromech 
+#define BETTERDUINO         // Extended Command set for MarcDuino Replacement Firmware (https://github.com/RealNobser/BetterDuinoFirmwareV4)
 
 // ---------------------------------------------------------------------------------------
 //                          MarcDuino Button Settings
@@ -1982,7 +1983,8 @@ void setup()
         while (1); //halt
     }
     Serial.print(F("USB + Bluetooth Library started.\r\n"));
-    
+    Usb.Task();
+
     output.reserve(200); // Reserve 200 bytes for the output string
 
     //Setup for Sabertooth
@@ -2003,31 +2005,57 @@ void setup()
     // *		Must be either 0 or 1 to set the direction (0 normal, 1 reversed)
     // *		Use SDxx to globally set the Servo direction, then SRxxy to change individual servos.    
     Serial.print(F("\r\nConfiguring Mr. Baddeley R2D2 MK3... "));
-    // Only needed once
-    delay(1500);
-    Serial3.print("#SD00\r");   // All servos normal
-    delay(550);
-    Serial3.print("#SR011\r");  // DPL door reverse
-    delay(550);
-    Serial3.print("#SR021\r");  // Upper Utility Arm reverse
-    delay(550);
-    Serial3.print("#SR031\r");  // Lower Utility Arm reverse
-    delay(550);
+    
+    #ifdef BETTERDUINO
+      // Serial 1: Dome MarcDuino Master
+      Serial1.print("#MD00\r");
 
-    // Gripper-Arm reverse (due to 232 free space problems)
-    Serial3.print("#SR051\r");  // Gripper Arm reverse
-    delay(550);
+      // Serial 2: Syren/Sabertooth
+      // Nothing to do
+      
+      // Serial 3: Body MarcDuino Master
+      Serial3.print("#MD02\r");
+    #else   
+      delay(1500);
 
-    // Interface-Arm reverse (due to 232 free space problems)
-    Serial3.print("#SR081\r");  // Interface Arm reverse
-    delay(550);
+      Serial1.print("#SD00\r");   // All servos normal
+      delay(550);
+      Serial1.print("#SR011\r");  // Lower Panel 1 reverse
+      delay(550);
+      Serial1.print("#SR021\r");  // Lower Panel 2 reverse
+      delay(550);
+      Serial1.print("#SR031\r");  // Lower Panel 3 reverse
+      delay(550);
+      Serial1.print("#SR041\r");  // Lower Panel 4 reverse
+      delay(550);
+      Serial1.print("#SR051\r");  // Lower Panel 4 reverse
+      delay(550);
+
+
+      Serial3.print("#SD00\r");   // All servos normal
+      delay(550);
+      Serial3.print("#SR011\r");  // DPL door reverse
+      delay(550);
+      Serial3.print("#SR021\r");  // Upper Utility Arm reverse
+      delay(550);
+      Serial3.print("#SR031\r");  // Lower Utility Arm reverse
+      delay(550);
+
+      // Gripper-Arm reverse (due to 232 free space problems)
+      Serial3.print("#SR051\r");  // Gripper Arm reverse
+      delay(550);
+
+      // Interface-Arm reverse (due to 232 free space problems)
+      Serial3.print("#SR081\r");  // Interface Arm reverse
+      delay(550);  
+    #endif
 
     Serial.print(F("done.\r\n"));    
 #endif
 
     // Close all panels
-    Serial1.print(":CL00");
-    Serial3.print(":CL00");
+    Serial1.print(":CL00\r");
+    Serial3.print(":CL00\r");
     delay(550);
     Serial1.print(":ST00\r");
     Serial3.print(":ST00\r");            
@@ -2049,6 +2077,9 @@ void loop()
       Serial.print(F("\r\nInside Loop.\r\n"));
       LoopMessageSent = true;
     }
+
+    Usb.Task();
+
     //Useful to enable with serial console when having controller issues.
     #ifdef TEST_CONROLLER
       testPS3Controller();
