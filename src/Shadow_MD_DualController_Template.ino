@@ -72,7 +72,7 @@ byte joystickDomeDeadZoneRange = 10;  // For controllers that centering problems
 byte driveDeadBandRange = 10;     // Used to set the Sabertooth DeadZone for foot motors
 
 int invertTurnDirection = 1;    // This may need to be set to 1 for some configurations
-int invertDriveDirection = -1;  // This may need to be set to 1 for some configurations
+int invertDriveDirection = 1;  // This may need to be set to 1 for some configurations
 int invertDomeDirection = -1;   // This may need to be set to 1 for some configurations
 
 byte domeAutoSpeed = 70;     // Speed used when dome automation is active - Valid Values: 50 - 100
@@ -88,9 +88,12 @@ int CurrentSongNum = 0; //First of 5 Custom Song MP3 Files stats at zero, the fi
 int CustomSongMax = 8; //Total Number of Custom Songs
 //Eebel END
 
+#define ENABLE_UHS_DEBUGGING 1
 #define SHADOW_DEBUG        // uncomment this for console DEBUG output
 #define SHADOW_VERBOSE      // uncomment this for console VERBOSE output
 #define MRBADDELEY          // setup marcduino eeprom for MrBaddeley printed droid
+//#define CANBUS              // uncomment this for CANBUS enabled astromech 
+#define BETTERDUINO         // Extended Command set for MarcDuino Replacement Firmware (https://github.com/RealNobser/BetterDuinoFirmwareV4)
 
 // ---------------------------------------------------------------------------------------
 //                          MarcDuino Button Settings
@@ -1763,13 +1766,19 @@ int marcDuinoBaudRate = 9600; // Set the baud rate for the Syren motor controlle
 #define SYREN_ADDR         129      // Serial Address for Dome Syren
 #define SABERTOOTH_ADDR    128      // Serial Address for Foot Sabertooth
 
-#define ENABLE_UHS_DEBUGGING 1
+// #define TEST_CONROLLER 1
 
 // ---------------------------------------------------------------------------------------
 //                          Libraries
 // ---------------------------------------------------------------------------------------
 #include <PS3BT.h>
 #include <usbhub.h>
+
+#ifdef CANBUS
+  #include <mcp_can.h>
+  #include <SPI.h>
+  #define CAN0_INT 48 // Set CAN-Interrupt to pin 48
+#endif
 
 // Satisfy IDE, which only needs to see the include statment in the ino.
 #ifdef dobogusinclude
@@ -1857,8 +1866,14 @@ Sabertooth *SyR=new Sabertooth(SYREN_ADDR, Serial2);
 ///////Setup for USB and Bluetooth Devices////////////////////////////
 USB Usb;
 BTD Btd(&Usb);
-PS3BT *PS3NavFoot=new PS3BT(&Btd);
-PS3BT *PS3NavDome=new PS3BT(&Btd);
+PS3BT PS3NavFootImpl(&Btd);
+PS3BT PS3NavDomeImpl(&Btd);
+PS3BT* PS3NavFoot=&PS3NavFootImpl;
+PS3BT* PS3NavDome=&PS3NavDomeImpl;
+
+#ifdef CANBUS
+MCP_CAN CAN0(SS);   // Set CS to pin SS
+#endif
 
 //Used for PS3 Fault Detection
 uint32_t msgLagTime = 0;
@@ -1915,7 +1930,26 @@ void setup()
     Serial.begin(115200);
     while (!Serial);
     
-    Serial.print(F("\r\nSystem starting up.\r\n"));
+    Serial.println("\r\nSystem starting up.\r\n");
+
+    // CAN-Bus
+    #ifdef CANBUS
+      Serial.println("Initializing MCP2515 (CAN-BUS)...");
+  
+    // Initialize MCP2515 running at 8MHz with a baudrate of 125kb/s and the masks and filters disabled.
+    if(CAN0.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ) == CAN_OK)
+      Serial.println("MCP2515 Initialized Successfully!");
+    else
+      Serial.println("Error Initializing MCP2515...");
+
+    // Since we do not set NORMAL mode, we are in loopback mode by default.
+    CAN0.setMode(MCP_NORMAL);
+
+    pinMode(CAN0_INT, INPUT);                           // Configuring pin for /INT input
+
+    Serial.println("MCP2515 configured.\r\n");
+
+    #endif
 
     //Setup for Serial1:: MarcDuino Dome Control Board
     Serial.print(F("\r\nMarcduino Dome connecting... "));
@@ -1935,23 +1969,23 @@ void setup()
     while (!Serial3);
     Serial.print(F("done.\r\n"));
 
+    //Setup for PS3
+    Serial.print(F("\r\nRegistering Controller Events... "));
+    PS3NavFoot->attachOnInit(onInitPS3NavFoot); // onInitPS3NavFoot is called upon a new connection
+    PS3NavDome->attachOnInit(onInitPS3NavDome); 
+    Serial.print(F("done.\r\n"));
+
     // Wait for powered up USB-Shield
     Serial.print(F("\r\nStarting USB... "));
-    delay(1500);
     if (Usb.Init() == -1)
     {
         Serial.print(F("\r\nOSC did not start! - HALT -"));
         while (1); //halt
     }
     Serial.print(F("USB + Bluetooth Library started.\r\n"));
-    
-    output.reserve(200); // Reserve 200 bytes for the output string
+    Usb.Task();
 
-    //Setup for PS3
-    Serial.print(F("\r\nRegistering Controller Events... "));
-    PS3NavFoot->attachOnInit(onInitPS3NavFoot); // onInitPS3NavFoot is called upon a new connection
-    PS3NavDome->attachOnInit(onInitPS3NavDome); 
-    Serial.print(F("done.\r\n"));
+    output.reserve(200); // Reserve 200 bytes for the output string
 
     //Setup for Sabertooth
     Serial.print(F("\r\nSetting up Sabertooth bus..."));    
@@ -1971,22 +2005,57 @@ void setup()
     // *		Must be either 0 or 1 to set the direction (0 normal, 1 reversed)
     // *		Use SDxx to globally set the Servo direction, then SRxxy to change individual servos.    
     Serial.print(F("\r\nConfiguring Mr. Baddeley R2D2 MK3... "));
-    // Only needed once
-    delay(1500);
-    Serial3.print("#SD00\r");   // All servos normal
-    delay(550);
-    Serial3.print("#SR011\r");  // DPL door reverse
-    delay(550);
-    Serial3.print("#SR021\r");  // Upper Utility Arm reverse
-    delay(550);
-    Serial3.print("#SR031\r");  // Lower Utility Arm reverse
-    delay(550);
+    
+    #ifdef BETTERDUINO
+      // Serial 1: Dome MarcDuino Master
+      Serial1.print("#MD00\r");
+
+      // Serial 2: Syren/Sabertooth
+      // Nothing to do
+      
+      // Serial 3: Body MarcDuino Master
+      Serial3.print("#MD02\r");
+    #else   
+      delay(1500);
+
+      Serial1.print("#SD00\r");   // All servos normal
+      delay(550);
+      Serial1.print("#SR011\r");  // Lower Panel 1 reverse
+      delay(550);
+      Serial1.print("#SR021\r");  // Lower Panel 2 reverse
+      delay(550);
+      Serial1.print("#SR031\r");  // Lower Panel 3 reverse
+      delay(550);
+      Serial1.print("#SR041\r");  // Lower Panel 4 reverse
+      delay(550);
+      Serial1.print("#SR051\r");  // Lower Panel 4 reverse
+      delay(550);
+
+
+      Serial3.print("#SD00\r");   // All servos normal
+      delay(550);
+      Serial3.print("#SR011\r");  // DPL door reverse
+      delay(550);
+      Serial3.print("#SR021\r");  // Upper Utility Arm reverse
+      delay(550);
+      Serial3.print("#SR031\r");  // Lower Utility Arm reverse
+      delay(550);
+
+      // Gripper-Arm reverse (due to 232 free space problems)
+      Serial3.print("#SR051\r");  // Gripper Arm reverse
+      delay(550);
+
+      // Interface-Arm reverse (due to 232 free space problems)
+      Serial3.print("#SR081\r");  // Interface Arm reverse
+      delay(550);  
+    #endif
+
     Serial.print(F("done.\r\n"));    
 #endif
 
     // Close all panels
-    Serial1.print(":CL00");
-    Serial3.print(":CL00");
+    Serial1.print(":CL00\r");
+    Serial3.print(":CL00\r");
     delay(550);
     Serial1.print(":ST00\r");
     Serial3.print(":ST00\r");            
@@ -2008,6 +2077,9 @@ void loop()
       Serial.print(F("\r\nInside Loop.\r\n"));
       LoopMessageSent = true;
     }
+
+    Usb.Task();
+
     //Useful to enable with serial console when having controller issues.
     #ifdef TEST_CONROLLER
       testPS3Controller();
@@ -6254,7 +6326,9 @@ boolean readUSB()
         footDriveSpeed = 0;
         WaitingforReconnect = true;
     }
-    
+
+     Usb.Task();
+
     if (PS3NavDome->PS3NavigationConnected) 
     {
 
