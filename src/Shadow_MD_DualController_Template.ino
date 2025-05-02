@@ -1998,68 +1998,6 @@ void setup()
     SyR->stop(); 
     Serial.print(F("done.\r\n"));
 
-#ifdef MRBADDELEY
-    // Config Mr. Baddeley printed droid
-    // #SRxxy Set individual servo to either forward or reversed xx=servo number y=direction
-    // *		Must be a 2 digit Servo number i.e. Servo 4 is 04
-    // *		Must be either 0 or 1 to set the direction (0 normal, 1 reversed)
-    // *		Use SDxx to globally set the Servo direction, then SRxxy to change individual servos.    
-    Serial.print(F("\r\nConfiguring Mr. Baddeley R2D2 MK3... "));
-    
-    #ifdef BETTERDUINO
-      // Serial 1: Dome MarcDuino Master
-      Serial1.print("#MD00\r");
-
-      // Serial 2: Syren/Sabertooth
-      // Nothing to do
-      
-      // Serial 3: Body MarcDuino Master
-      Serial3.print("#MD02\r");
-    #else   
-      delay(1500);
-
-      Serial1.print("#SD00\r");   // All servos normal
-      delay(550);
-      Serial1.print("#SR011\r");  // Lower Panel 1 reverse
-      delay(550);
-      Serial1.print("#SR021\r");  // Lower Panel 2 reverse
-      delay(550);
-      Serial1.print("#SR031\r");  // Lower Panel 3 reverse
-      delay(550);
-      Serial1.print("#SR041\r");  // Lower Panel 4 reverse
-      delay(550);
-      Serial1.print("#SR051\r");  // Lower Panel 4 reverse
-      delay(550);
-
-
-      Serial3.print("#SD00\r");   // All servos normal
-      delay(550);
-      Serial3.print("#SR011\r");  // DPL door reverse
-      delay(550);
-      Serial3.print("#SR021\r");  // Upper Utility Arm reverse
-      delay(550);
-      Serial3.print("#SR031\r");  // Lower Utility Arm reverse
-      delay(550);
-
-      // Gripper-Arm reverse (due to 232 free space problems)
-      Serial3.print("#SR051\r");  // Gripper Arm reverse
-      delay(550);
-
-      // Interface-Arm reverse (due to 232 free space problems)
-      Serial3.print("#SR081\r");  // Interface Arm reverse
-      delay(550);  
-    #endif
-
-    Serial.print(F("done.\r\n"));    
-#endif
-
-    // Close all panels
-    Serial1.print(":CL00\r");
-    Serial3.print(":CL00\r");
-    delay(550);
-    Serial1.print(":ST00\r");
-    Serial3.print(":ST00\r");            
-
     randomSeed(analogRead(0));  // random number seed for dome automation   
     Serial.print(F("\r\n\r\nEntering Loop."));
 }
