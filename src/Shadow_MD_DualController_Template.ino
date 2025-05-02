@@ -49,8 +49,8 @@
 // String PS3ControllerFootMac = "XX:XX:XX:XX:XX:XX";  //Set this to your FOOT PS3 controller MAC address
 // String PS3ControllerDomeMAC = "XX:XX:XX:XX:XX:XX";  //Set to a secondary DOME PS3 controller MAC address (Optional)
 
-String PS3ControllerFootMac = "00:06:F7:C1:CE:BE";  //Set this to your FOOT PS3 controller MAC address
-String PS3ControllerDomeMAC = "00:07:04:EC:2F:3D";  //Set to a secondary DOME PS3 controller MAC address (Optional)
+String PS3ControllerFootMac = "04:76:6E:3C:A3:95";  //Set this to your FOOT PS3 controller MAC address
+String PS3ControllerDomeMAC = "04:76:6E:F5:51:C8";  //Set to a secondary DOME PS3 controller MAC address (Optional)
 String PS3ControllerBackupFootMac = "XX";  //Set to the MAC Address of your BACKUP FOOT controller (Optional)
 String PS3ControllerBackupDomeMAC = "XX";  //Set to the MAC Address of your BACKUP DOME controller (Optional)
 
@@ -71,9 +71,9 @@ byte joystickDomeDeadZoneRange = 10;  // For controllers that centering problems
 
 byte driveDeadBandRange = 10;     // Used to set the Sabertooth DeadZone for foot motors
 
-int invertTurnDirection = 1;    // This may need to be set to 1 for some configurations
+int invertTurnDirection = -1;    // This may need to be set to 1 for some configurations
 int invertDriveDirection = 1;  // This may need to be set to 1 for some configurations
-int invertDomeDirection = -1;   // This may need to be set to 1 for some configurations
+int invertDomeDirection = 1;   // This may need to be set to 1 for some configurations
 
 byte domeAutoSpeed = 70;     // Speed used when dome automation is active - Valid Values: 50 - 100
 int time360DomeTurn = 2500;  // milliseconds for dome to complete 360 turn at domeAutoSpeed - Valid Values: 2000 - 8000 (2000 = 2 seconds)
